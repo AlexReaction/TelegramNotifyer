@@ -4,6 +4,7 @@ import logging
 from telegram.ext import MessageHandler, Filters
 import databaseConnector
 import globals
+from mysql.connector import IntegrityError
 
 updater = Updater(token=globals.API_TOKEN, use_context=True)
 
@@ -24,12 +25,20 @@ def start(update, context):
             databaseConnector.insertAddress(url, chatID=update.effective_chat.id)
             print("Url saved!")
             savedURLS.append(url)
+            context.bot.send_message(chat_id=update.effective_chat.id,text="Added: " + url + " to your notify list.")
         else:
-            databaseConnector.updateSubscribedChat(url, chatID=update.effective_chat.id)
-            print("Added new subscriber")
+            try:
+                databaseConnector.updateSubscribedChat(url, chatID=update.effective_chat.id)
+                print("Added new subscriber")
+                context.bot.send_message(chat_id=update.effective_chat.id,text="Added: " + url + " to your notify list.")
 
+            except IntegrityError:
+                print("Error occurred")
+                context.bot.send_message(chat_id=update.effective_chat.id, text=url + " is already subscribed")
 
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Added: " + url + " to your notify list.")
+            except ValueError:
+                print("Subscriber already present!")
+                context.bot.send_message(chat_id=update.effective_chat.id, text=url + " is already subscribed")
 
 
 def echoMessage(update, context):

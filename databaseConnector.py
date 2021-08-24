@@ -24,8 +24,14 @@ def insertAddress(url, chatID):
 
 def updateSubscribedChat(url, chatID):
     mycursor = cnx.cursor()
-    mycursor.execute("UPDATE RSSURLS SET subscribedChat = concat(subscribedChat, '" +','  + str(chatID) + "') WHERE address = '" + url + "'")
-    cnx.commit()
+    mycursor.execute("SELECT subscribedChat FROM RSSURLS WHERE address = '" + url + "'")
+    myresult = mycursor.fetchall()
+
+    if str(chatID) in myresult[0]:
+        raise ValueError('Chat Id is already present as a subscriber.')
+    else:
+        mycursor.execute("UPDATE RSSURLS SET subscribedChat = concat_WS(',' , subscribedChat, '" + str(chatID) + "') WHERE address = '" + url + "'")
+        cnx.commit()
 
 
 def disconnect():
